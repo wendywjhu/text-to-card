@@ -56,66 +56,80 @@ def draw_content_with_special_chars(draw, content, start_y, params, img_width, m
     left_margin = params['left_margin']
     max_width = img_width - left_margin - 72  # 计算每行的最大宽度，右边距设为72
 
+    special_tags = ["网友提问：", "提问：", "王盐："]
+
     for line in lines:
-        # 检查是否还有足够的垂直空间来绘制新行，如果没有，则换下一张绘制
+        # 检查是否还有足够的垂直空间来绘制新行
         if y_position + params['font_size'] > max_height - 100:
             remaining_lines.append(line)
             continue
 
-        # 定义特殊标签并检查当前行是否以特殊标签开始
-        special_tags = ["网友提问：", "提问：", "王盐："]
-        is_special = any(line.strip().startswith(tag) for tag in special_tags)
+        # 检查当前行是否以特殊标签开始
+        is_special = False
+        special_part = ""
+        normal_part = line
+
+        for tag in special_tags:
+
+            special_tag_temp = line.strip();
+
+            if line.strip().startswith(tag):
+                is_special = True
+                special_part = tag
+                normal_part = line.strip()[len(tag):].strip()
+                break
 
         if is_special:
-
-            # 绘制整行特殊标签文本
-            draw.text((left_margin, y_position), line.strip(), fill=params['special_color'], font=bold_font)
-            y_position += params['font_size'] + params['line_spacing']
-
-        else:
-            # 处理普通文本行
-            words = line.split()  # 将行拆分成单词或短语
-            current_line = ""
-            for word in words:
-                # 尝试将新单词添加到当前行
-                test_line = current_line + (" " if current_line else "") + word
-                text_width = draw.textlength(test_line, font=font)
-                if text_width <= max_width:
-                    current_line = test_line
-                else:
-                    # 如果添加新单词超过最大宽度，绘制当前行并开始新行
-                    if current_line:
-                        draw.text((left_margin, y_position), current_line, fill=params['text_color'], font=font)
-                        y_position += params['font_size'] + params['line_spacing']
-                        current_line = word
-                    else:
-                        # 处理单个单词超过一行宽度的情况
-                        for char in word:
-                            if draw.textlength(current_line + char, font=font) > max_width:
-                                draw.text((left_margin, y_position), current_line, fill=params['text_color'], font=font)
-                                y_position += params['font_size'] + params['line_spacing']
-                                current_line = char
-                            else:
-                                current_line += char
-
-                # 检查是否还有足够的垂直空间
-                if y_position + params['font_size'] > max_height - 100:
-                    remaining_words = words[words.index(word):]
-                    remaining_lines.append(" ".join(remaining_words))
-                    break
-
-            # 绘制最后一行（如果有）
-            if current_line and y_position + params['font_size'] <= max_height - 100:
-                draw.text((left_margin, y_position), current_line, fill=params['text_color'], font=font)
+            # 处理特殊标签部分
+            if y_position + params['font_size'] <= max_height - 100:
+                draw.text((left_margin, y_position), special_part, fill=params['special_color'], font=bold_font)
                 y_position += params['font_size'] + params['line_spacing']
+            else:
+                remaining_lines.append(line)
+                continue
+
+        # 处理普通文本部分（包括特殊行的剩余部分）
+        words = normal_part.split('\n')
+        current_line = ""
+        for word in words:
+            # 尝试将新单词添加到当前行
+            test_line = current_line + (" " if current_line else "") + word
+            text_width = draw.textlength(test_line, font=font)
+            if text_width <= max_width:
+                current_line = test_line
+            else:
+                # 如果添加新单词超过最大宽度，绘制当前行并开始新行
+                if current_line:
+                    draw.text((left_margin, y_position), current_line, fill=params['text_color'], font=font)
+                    y_position += params['font_size'] + params['line_spacing']
+                    current_line = word
+                else:
+                    # 处理单个单词超过一行宽度的情况
+                    for char in word:
+                        if draw.textlength(current_line + char, font=font) > max_width:
+                            draw.text((left_margin, y_position), current_line, fill=params['text_color'], font=font)
+                            y_position += params['font_size'] + params['line_spacing']
+                            current_line = char
+                        else:
+                            current_line += char
+
+            # 检查是否还有足够的垂直空间
+            if y_position + params['font_size'] > max_height - 100:
+                remaining_words = words[words.index(word):]
+                remaining_lines.append(" ".join(remaining_words))
+                break
+
+        # 绘制最后一行（如果有）
+        if current_line and y_position + params['font_size'] <= max_height - 100:
+            draw.text((left_margin, y_position), current_line, fill=params['text_color'], font=font)
+            y_position += params['font_size'] + params['line_spacing']
 
         # 添加额外的行间距
         y_position += params['line_spacing'] * 0.6
 
     # 返回无法在当前图片中绘制的剩余内容
     return '\n'.join(remaining_lines)
-
-def generate_content_new_images(output_folder, title_lines, content, params):
+def generate_content_new_images(output_folasder, title_lines, content, params):
     img_template = Image.open(params['img_path'])
     img_counter = 2
 
@@ -144,13 +158,27 @@ def read_excel_and_print(file_path, output_folder, title_params, content_params)
                                                  content_params=content_params)
 
 
-        # remaining_content = generate_title_image(
-        #     output_folder,
-        #     '工作中不知道怎么社交怎么办？',
-        #     '工作中不知道怎么社交怎么办？怎么感谢帮助自己的同事呢？\n\n是否善于交际，其实很看性格。\n\n你如果不是那种八面玲珑的人，工作中最好的交际方式，就是认真工作，别给他人添麻烦。\n\n其他人觉得你靠谱，自然愿意和你交朋友。\n\n现在可能不明显，等你再过几年，经历的多了，就会知道靠谱两字有多珍贵。\n\n表达感激这事，其实不需要明说，找个理由送点小礼物更好。\n\n例如说我在网上看到有不错的好物，自己觉得挺不错的，顺手多买一个，送个别人，也不是啥大事，这种「顺手的感谢」其实更自然。',
-        #     **title_params,
-        #     content_params=content_params
-        # )
+#         remaining_content = generate_title_image(
+#             output_folder,
+#             '工作中不知道怎么社交怎么办？',
+#             """提问：爱人去年买网络产品亏 80w，我填上 50W，至此我们基本掏空压力越来越大（爆雷前我多次提醒不要买不要玩这些，答应了我之后偷偷买的）一年过去，难以平静，这一年怎么过来的真的难以回忆。
+#
+# 更主要是经过这事后她还是没什么长进，恐惧还会不会下次又来，以前偶尔（几年前）和最近都劝多读书、学习提升自己（哪怕不是为挣钱）让自己格局目光长远些，可似乎没什么反应依然如故，对于这种无力感比失去钱财还难受，明明可以避过的坑，偏偏要踩进去。痛心疾首，我有时真难以承受，要怎么走出来呀。
+#
+# 王盐：
+#
+# 我要是你，我就离婚。
+#
+# 钱的损失在其次，但婚姻是两个人的事，家里的大事，另一半偷偷就做了，完全不和你商量，这样的人怎么相伴一生？
+#
+# 不要试图改变一个人，不要有这种侥幸心理。
+#
+# 人家爹妈养了二三十年，学校教育了十几年，都没改变的人，你怎么可能改变她呢。
+#
+# 你填上50W算是仁至义尽了，早离早超生。""",
+#             **title_params,
+#             content_params=content_params
+#         )
 
         if remaining_content.strip():
 
