@@ -4,40 +4,47 @@ import os
 import openpyxl
 import re
 
-
-## 字间距：5
-## 行间距：40
-## 开始位置：72
-## 字体 ：45
-
-
 def generate_title_image(output_folder, title_lines, content, img_title_path, font_title_path, font_title_size,
                          anchor_title_y, line_spacing, content_params, title_color):
+    # 打开指定路径的图片作为标题背景
     img_title = Image.open(img_title_path)
+    # 使用指定的字体文件和大小创建字体对象
     font_title = ImageFont.truetype(font_title_path, font_title_size)
+    # 在图片上创建绘图对象
     draw = ImageDraw.Draw(img_title)
+    # 获取图片宽度
     img_title_width = img_title.width
 
     # 绘制标题
     width_char = 15  #代表多少个字符换行
 
+    # 使用textwrap将标题文本按指定宽度换行
     lines = textwrap.wrap(title_lines, width= width_char)
 
+    # 从content_params中获取左边距
     left_margin = content_params["left_margin"]
 
+    # 逐行绘制标题文本
     for line in lines:
         draw.text((left_margin, anchor_title_y), line, fill=title_color, font=font_title)
+        # 更新下一行的y坐标
         anchor_title_y += font_title_size + line_spacing
 
 
     # 绘制内容
+    # 设置内容起始y坐标，比标题结束位置低50像素
     content_y = anchor_title_y + 50
+
+    # 调用draw_content_with_special_chars函数绘制内容，并获取可能未绘制的剩余内容
     remaining_content = draw_content_with_special_chars(draw, content, content_y, content_params, img_title.width,
                                                         img_title.height)
 
+    # 保存生成的图片
     img_title.save(os.path.join(output_folder, f"{title_lines}-1.jpg"))
     print(f'标题图片生成完毕')
+    # 返回剩余未绘制的内容
     return remaining_content
+
 def draw_content_with_special_chars(draw, content, start_y, params, img_width, max_height):
     # 初始化字体
     font = ImageFont.truetype(params['font_path'], params['font_size'])
@@ -50,7 +57,7 @@ def draw_content_with_special_chars(draw, content, start_y, params, img_width, m
     max_width = img_width - left_margin - 72  # 计算每行的最大宽度，右边距设为72
 
     for line in lines:
-        # 检查是否还有足够的垂直空间来绘制新行
+        # 检查是否还有足够的垂直空间来绘制新行，如果没有，则换下一张绘制
         if y_position + params['font_size'] > max_height - 100:
             remaining_lines.append(line)
             continue
@@ -60,13 +67,11 @@ def draw_content_with_special_chars(draw, content, start_y, params, img_width, m
         is_special = any(line.strip().startswith(tag) for tag in special_tags)
 
         if is_special:
-            # 处理特殊标签行
-            if y_position + params['font_size'] > max_height - 100:
-                remaining_lines.append(line)
-                continue
+
             # 绘制整行特殊标签文本
             draw.text((left_margin, y_position), line.strip(), fill=params['special_color'], font=bold_font)
             y_position += params['font_size'] + params['line_spacing']
+
         else:
             # 处理普通文本行
             words = line.split()  # 将行拆分成单词或短语
@@ -109,6 +114,7 @@ def draw_content_with_special_chars(draw, content, start_y, params, img_width, m
 
     # 返回无法在当前图片中绘制的剩余内容
     return '\n'.join(remaining_lines)
+
 def generate_content_new_images(output_folder, title_lines, content, params):
     img_template = Image.open(params['img_path'])
     img_counter = 2
@@ -145,7 +151,6 @@ def read_excel_and_print(file_path, output_folder, title_params, content_params)
         #     **title_params,
         #     content_params=content_params
         # )
-
 
         if remaining_content.strip():
 
