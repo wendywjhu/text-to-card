@@ -58,6 +58,9 @@ def draw_content_with_special_chars(draw, content, start_y, params, img_width, m
 
     special_tags = ["网友提问：", "提问：", "王盐："]
 
+    # 新增字间距参数
+    char_spacing = params.get('char_spacing', 0)  # 默认为0，可以在params中设置
+
     for line in lines:
         if y_position + params['font_size'] > max_height - 100:
             remaining_lines.append(line)
@@ -86,7 +89,7 @@ def draw_content_with_special_chars(draw, content, start_y, params, img_width, m
                         remaining_lines.append(''.join(chars[i:]))
                         break
                 draw.text((x_position, y_position), char, fill=params['special_color'], font=bold_font)
-                x_position += char_width
+                x_position += char_width + char_spacing  # 添加字间距
             else:
                 # 普通字符处理
                 char_width = draw.textlength(char, font=font)
@@ -97,7 +100,7 @@ def draw_content_with_special_chars(draw, content, start_y, params, img_width, m
                         remaining_lines.append(''.join(chars[i:]))
                         break
                 draw.text((x_position, y_position), char, fill=params['text_color'], font=font)
-                x_position += char_width
+                x_position += char_width + char_spacing  # 添加字间距
 
             i += 1
 
@@ -184,13 +187,14 @@ if __name__ == "__main__":
     content_params = {
         "img_path": os.path.abspath('template-background.jpg'),
         "font_path": os.path.abspath('SourceHanSansCN-Normal.otf'),
-        "font_size": 50,
+        "font_size": 52,
         "line_spacing": 40,
         "chars_per_line": 22,# 每行固定字符数
         "text_color":  (0, 0, 0),
         "special_color":  (190, 10, 10),   #(128, 30, 63)
         "start_y": 72,
         "left_margin": 72,
+        "char_spacing": 4 #字间距
     }
 
     # 读取EXCEL文件
