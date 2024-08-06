@@ -45,90 +45,66 @@ def generate_title_image(output_folder, title_lines, content, img_title_path, fo
     # 返回剩余未绘制的内容
     return remaining_content
 
+
 def draw_content_with_special_chars(draw, content, start_y, params, img_width, max_height):
-    # 初始化字体
     font = ImageFont.truetype(params['font_path'], params['font_size'])
     bold_font = ImageFont.truetype('SourceHanSansCN-Heavy.otf', params['font_size'])
 
-    y_position = start_y  # 当前绘制的垂直位置
-    lines = content.split('\n')  # 将内容分割成行
-    remaining_lines = []  # 存储无法在当前图片中绘制的剩余行
+    y_position = start_y
+    lines = content.split('\n')
+    remaining_lines = []
     left_margin = params['left_margin']
-    max_width = img_width - left_margin - 72  # 计算每行的最大宽度，右边距设为72
+    max_width = img_width - left_margin - 72
 
     special_tags = ["网友提问：", "提问：", "王盐："]
 
     for line in lines:
-        # 检查是否还有足够的垂直空间来绘制新行
         if y_position + params['font_size'] > max_height - 100:
             remaining_lines.append(line)
             continue
 
-        # 检查当前行是否以特殊标签开始
-        is_special = False
-        special_part = ""
-        normal_part = line
+        x_position = left_margin
 
+        special_start = None
         for tag in special_tags:
-
-            special_tag_temp = line.strip();
-
             if line.strip().startswith(tag):
-                is_special = True
-                special_part = tag
-                normal_part = line.strip()[len(tag):].strip()
+                special_start = tag
                 break
 
-        if is_special:
-            # 处理特殊标签部分
-            if y_position + params['font_size'] <= max_height - 100:
-                draw.text((left_margin, y_position), special_part, fill=params['special_color'], font=bold_font)
-                y_position += params['font_size'] + params['line_spacing']
-            else:
-                remaining_lines.append(line)
-                continue
+        chars = list(line)
+        i = 0
 
-        # 处理普通文本部分（包括特殊行的剩余部分）
-        words = normal_part.split('\n')
-        current_line = ""
-        for word in words:
-            # 尝试将新单词添加到当前行
-            test_line = current_line + (" " if current_line else "") + word
-            text_width = draw.textlength(test_line, font=font)
-            if text_width <= max_width:
-                current_line = test_line
-            else:
-                # 如果添加新单词超过最大宽度，绘制当前行并开始新行
-                if current_line:
-                    draw.text((left_margin, y_position), current_line, fill=params['text_color'], font=font)
+        while i < len(chars):
+            char = chars[i]
+            if special_start and i < len(special_start):
+                # 特殊字符处理
+                char_width = draw.textlength(char, font=bold_font)
+                if x_position + char_width > img_width - 72:
                     y_position += params['font_size'] + params['line_spacing']
-                    current_line = word
-                else:
-                    # 处理单个单词超过一行宽度的情况
-                    for char in word:
-                        if draw.textlength(current_line + char, font=font) > max_width:
-                            draw.text((left_margin, y_position), current_line, fill=params['text_color'], font=font)
-                            y_position += params['font_size'] + params['line_spacing']
-                            current_line = char
-                        else:
-                            current_line += char
+                    x_position = left_margin
+                    if y_position + params['font_size'] > max_height - 100:
+                        remaining_lines.append(''.join(chars[i:]))
+                        break
+                draw.text((x_position, y_position), char, fill=params['special_color'], font=bold_font)
+                x_position += char_width
+            else:
+                # 普通字符处理
+                char_width = draw.textlength(char, font=font)
+                if x_position + char_width > img_width - 72:
+                    y_position += params['font_size'] + params['line_spacing']
+                    x_position = left_margin
+                    if y_position + params['font_size'] > max_height - 100:
+                        remaining_lines.append(''.join(chars[i:]))
+                        break
+                draw.text((x_position, y_position), char, fill=params['text_color'], font=font)
+                x_position += char_width
 
-            # 检查是否还有足够的垂直空间
-            if y_position + params['font_size'] > max_height - 100:
-                remaining_words = words[words.index(word):]
-                remaining_lines.append(" ".join(remaining_words))
-                break
+            i += 1
 
-        # 绘制最后一行（如果有）
-        if current_line and y_position + params['font_size'] <= max_height - 100:
-            draw.text((left_margin, y_position), current_line, fill=params['text_color'], font=font)
-            y_position += params['font_size'] + params['line_spacing']
+        y_position += params['font_size'] + params['line_spacing'] * 0.6
 
-        # 添加额外的行间距
-        y_position += params['line_spacing'] * 0.6
-
-    # 返回无法在当前图片中绘制的剩余内容
     return '\n'.join(remaining_lines)
+
 def generate_content_new_images(output_folasder, title_lines, content, params):
     img_template = Image.open(params['img_path'])
     img_counter = 2
@@ -199,7 +175,7 @@ if __name__ == "__main__":
         "font_title_size": 70,
         "anchor_title_y": 50,
         "line_spacing": 18,
-        "title_color":  (128, 30, 63),
+        "title_color": (190, 10, 10),   #(128, 30, 63)
     }
 
     # 内容基础参数设置
@@ -212,7 +188,7 @@ if __name__ == "__main__":
         "line_spacing": 40,
         "chars_per_line": 22,# 每行固定字符数
         "text_color":  (0, 0, 0),
-        "special_color":  (128, 30, 63),
+        "special_color":  (190, 10, 10),   #(128, 30, 63)
         "start_y": 72,
         "left_margin": 72,
     }
