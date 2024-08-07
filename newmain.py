@@ -48,7 +48,7 @@ def generate_title_image(output_folder, title_lines, content, img_title_path, fo
 
 def draw_content_with_special_chars(draw, content, start_y, params, img_width, max_height):
     font = ImageFont.truetype(params['font_path'], params['font_size'])
-    bold_font = ImageFont.truetype('SourceHanSansCN-Heavy.otf', params['font_size'])
+    bold_font = ImageFont.truetype('SourceHanSansCN-Medium.otf', params['font_size'])
 
     y_position = start_y
     lines = content.split('\n')
@@ -174,7 +174,7 @@ if __name__ == "__main__":
     # 标题基础参数设置
     title_params = {
         "img_title_path": os.path.abspath('template-background.jpg'),
-        "font_title_path": os.path.abspath('SourceHanSansCN-Heavy.otf'),
+        "font_title_path": os.path.abspath('SourceHanSansCN-Medium.otf'),
         "font_title_size": 70,
         "anchor_title_y": 50,
         "line_spacing": 18,
