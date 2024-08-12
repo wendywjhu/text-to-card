@@ -6,6 +6,9 @@ import re
 
 def generate_title_image(output_folder, title_lines, content, img_title_path, font_title_path, font_title_size,
                          anchor_title_y, line_spacing, content_params, title_color):
+    #去重，把正文中与标题一样的第一段剔除
+    content = preprocess_content(title_lines, content)
+
     # 打开指定路径的图片作为标题背景
     img_title = Image.open(img_title_path)
     # 使用指定的字体文件和大小创建字体对象
@@ -32,8 +35,9 @@ def generate_title_image(output_folder, title_lines, content, img_title_path, fo
 
 
     # 绘制内容
-    # 设置内容起始y坐标，比标题结束位置低50像素
-    content_y = anchor_title_y + 50
+    content_y = anchor_title_y
+    content_y += content_params['font_size'] + content_params['line_spacing'] * 0.6
+
 
     # 调用draw_content_with_special_chars函数绘制内容，并获取可能未绘制的剩余内容
     remaining_content = draw_content_with_special_chars(draw, content, content_y, content_params, img_title.width,
@@ -44,7 +48,11 @@ def generate_title_image(output_folder, title_lines, content, img_title_path, fo
     print(f'标题图片生成完毕')
     # 返回剩余未绘制的内容
     return remaining_content
-
+def preprocess_content(title, content):
+    lines = content.split('\n')
+    if lines and lines[0].strip() == title.strip():
+        return '\n'.join(lines[1:]).strip()
+    return content
 
 def draw_content_with_special_chars(draw, content, start_y, params, img_width, max_height):
     font = ImageFont.truetype(params['font_path'], params['font_size'])
@@ -137,28 +145,6 @@ def read_excel_and_print(file_path, output_folder, title_params, content_params)
                                                  content_params=content_params)
 
 
-#         remaining_content = generate_title_image(
-#             output_folder,
-#             '工作中不知道怎么社交怎么办？',
-#             """提问：爱人去年买网络产品亏 80w，我填上 50W，至此我们基本掏空压力越来越大（爆雷前我多次提醒不要买不要玩这些，答应了我之后偷偷买的）一年过去，难以平静，这一年怎么过来的真的难以回忆。
-#
-# 更主要是经过这事后她还是没什么长进，恐惧还会不会下次又来，以前偶尔（几年前）和最近都劝多读书、学习提升自己（哪怕不是为挣钱）让自己格局目光长远些，可似乎没什么反应依然如故，对于这种无力感比失去钱财还难受，明明可以避过的坑，偏偏要踩进去。痛心疾首，我有时真难以承受，要怎么走出来呀。
-#
-# 王盐：
-#
-# 我要是你，我就离婚。
-#
-# 钱的损失在其次，但婚姻是两个人的事，家里的大事，另一半偷偷就做了，完全不和你商量，这样的人怎么相伴一生？
-#
-# 不要试图改变一个人，不要有这种侥幸心理。
-#
-# 人家爹妈养了二三十年，学校教育了十几年，都没改变的人，你怎么可能改变她呢。
-#
-# 你填上50W算是仁至义尽了，早离早超生。""",
-#             **title_params,
-#             content_params=content_params
-#         )
-
         if remaining_content.strip():
 
             generate_content_new_images(output_folder, column1_value, remaining_content, content_params)
@@ -177,7 +163,7 @@ if __name__ == "__main__":
         "font_title_path": os.path.abspath('SourceHanSansCN-Medium.otf'),
         "font_title_size": 70,
         "anchor_title_y": 50,
-        "line_spacing": 18,
+        "line_spacing": 30,#行间距
         "title_color": (190, 10, 10),   #(128, 30, 63)
     }
 
@@ -188,7 +174,7 @@ if __name__ == "__main__":
         "img_path": os.path.abspath('template-background.jpg'),
         "font_path": os.path.abspath('SourceHanSansCN-Normal.otf'),
         "font_size": 52,
-        "line_spacing": 40,
+        "line_spacing": 30,#行间距
         "chars_per_line": 22,# 每行固定字符数
         "text_color":  (0, 0, 0),
         "special_color":  (190, 10, 10),   #(128, 30, 63)
