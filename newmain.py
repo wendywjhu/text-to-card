@@ -4,6 +4,8 @@ import os
 import openpyxl
 import re
 
+# 哈哈哈哈哈哈
+
 def generate_title_image(output_folder, title_lines, content, img_title_path, font_title_path, font_title_size,
                          anchor_title_y, line_spacing, content_params, title_color):
     #去重，把正文中与标题一样的第一段剔除
